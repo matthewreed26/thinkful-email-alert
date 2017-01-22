@@ -10,6 +10,7 @@ require('dotenv').config();
 const {logger} = require('./utilities/logger');
 // these are custom errors we've created
 const {FooError, BarError, BizzError} = require('./errors');
+const {sendEmail} = require('./emailer');
 
 const app = express();
 
@@ -30,6 +31,21 @@ app.get('*', russianRoulette);
 // YOUR MIDDLEWARE FUNCTION should be activated here using
 // `app.use()`. It needs to come BEFORE the `app.use` call
 // below, which sends a 500 and error message to the client
+app.use((err, req, res, next) => {
+  logger.error(err);
+  if(!(err instanceof BizzError)){
+    const errJson = JSON.stringify(err);
+    const emailData = {
+        from: 'matthewreed26@gmail.com',
+        to: 'mreed@ventera.com',
+        subject: 'A non-Bizz Error has occurred!',
+        text: errJson,
+        html: `<p>${errJson}</p>`
+    }
+    sendEmail(emailData);
+  }
+  next();
+});
 
 app.use((err, req, res, next) => {
   logger.error(err);
